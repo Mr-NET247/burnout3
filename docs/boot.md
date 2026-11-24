@@ -164,6 +164,6 @@ main.c); pad 2 is host XInput pad 2 or `p2-` steps in a pad script.
 
 Speed under the software GPU: menus ~14 fps, races ~2-4 fps on 12 cores.
 
-Known gaps: a vertical-streak pattern over the menu backdrop movie; the
+Known gaps (the movie streaks are fixed by xboxrecomp PR #355): the
 sky dome's texture seams; bump/dot-product texture modes read zero; the
 profile is not saved, so every launch replays the tutorial videos.

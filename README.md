@@ -34,10 +34,15 @@ There is no save profile yet, so every launch replays the tutorial videos.
 | Party Crash | 2–8, pass the pad | plays |
 | Xbox Live / System Link | — | not attempted |
 
-Known gaps: vertical streaks over the menu backdrop movie, seams in the sky dome,
+Known gaps: seams in the sky dome,
 bump-mapped (dot-product) texture stages read as zero, and no profile saving.
 [ROADMAP.md](ROADMAP.md) has the list; [docs/boot.md](docs/boot.md) has what it
 took to get here, fix by fix.
+
+The vertical streaks over the movies (title and menu backdrops, tutorial
+videos) were depth-test failures at the far plane in the toolkit's software
+rasteriser; the fix is xboxrecomp PR #355
+(https://github.com/sp00nznet/xboxrecomp/pull/355).
 
 This is one title in the xboxrecomp family and follows its house style: the
 toolkit carries everything that isn't specific to Burnout 3, and this repo carries
