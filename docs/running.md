@@ -269,9 +269,9 @@ tree builds on either toolkit. To build on the fork:
    ```toml
    [toolkit]
    url = "https://github.com/apexJCL/xboxrecomp.git"
-   tag = "blinx2-v0.4.0"
+   tag = "blinx2-v0.15.0"
    branch = "blinx2/portability"
-   commit = "4e5f6039c3c3cf39de1c284cad9df3ae85e853a0"
+   commit = "92f8954cac77fb95f11955ebd0b28b1267a31fdb"
    ```
 
 2. Put the fork where the CLI looks before `../xboxrecomp`, so the upstream
@@ -281,7 +281,7 @@ tree builds on either toolkit. To build on the fork:
 
    ```
    rm -rf external/xboxrecomp
-   git clone --branch blinx2-v0.4.0 https://github.com/apexJCL/xboxrecomp.git external/xboxrecomp
+   git clone --branch blinx2-v0.15.0 https://github.com/apexJCL/xboxrecomp.git external/xboxrecomp
    ./burnout3 setup
    ./burnout3 analyze
    ./burnout3 recomp          # gen/ again: the fork's lifter and --spin-waits differ

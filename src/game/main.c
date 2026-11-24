@@ -1207,8 +1207,17 @@ int main(int argc, char **argv)
      * runtime raises vblanks (Windows, with no host event, boots without).
      * v0.14.0 only checks that the key is set, so any value, 0 included,
      * keeps them on. */
-    if (!getenv("RECOMP_VBLANK"))
+    if (!getenv("RECOMP_VBLANK")) {
+#if defined(__APPLE__)
+        /* On Metal the 60 Hz schedule: the fork's v0.15 takes "1" as the
+         * plain tick, which ran the game at about 42 vblanks a second on an
+         * M4 Pro; "paced" (understood by upstream v0.18 too) holds 60. */
+        const char *b = getenv("RECOMP_PB_BACKEND");
+        env_set("RECOMP_VBLANK", !b || !strcmp(b, "metal") ? "paced" : "1");
+#else
         env_set("RECOMP_VBLANK", "1");
+#endif
+    }
 #endif
 #if defined(__APPLE__)
     /* The GPU on the Mac, where a toolkit has one: the CPU rasteriser runs
@@ -1217,7 +1226,19 @@ int main(int argc, char **argv)
      * the SDL window; RECOMP_PB_BACKEND=cpu asks for that anyway. */
     if (!getenv("RECOMP_PB_BACKEND"))
         env_set("RECOMP_PB_BACKEND", "metal");
+    /* The keyboard as pad 1: most Macs have no controller plugged in, and
+     * without one nothing gets past PRESS START. The toolkit merges it on
+     * top of a real pad on port 0, so a controller keeps working.
+     * RECOMP_KEYBOARD=0 turns it off. */
+    if (!getenv("RECOMP_KEYBOARD"))
+        env_set("RECOMP_KEYBOARD", "1");
 #endif
+    /* Audio queue depth: the toolkit's 4 x 512 samples (43 ms) runs dry on
+     * the frames of up to 24 ms around a race start, two underruns per race
+     * on an M4 Pro; 6 (64 ms) had none on the same route. An explicit
+     * value still wins. */
+    if (!getenv("RECOMP_AUDIO_BUF_COUNT"))
+        env_set("RECOMP_AUDIO_BUF_COUNT", "6");
     if (record)
         record_start(record);
     if (seconds)
