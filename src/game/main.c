@@ -1209,6 +1209,99 @@ static void mobile_defaults(void)
 }
 #endif
 
+/* ---- the front end, answered for the player ---------------------------------
+ *
+ * Burnout 3's title screen (it opens _FEMain.xmv) waits for START, then
+ * offers Load Profile, the profile, and Continue, all on START with the
+ * defaults, then "Load successful: Continue" on A. RECOMP_AUTO_PROFILE (on
+ * by default; 0 off): from the title movie, START every 1.5 s until a
+ * profile file opens, then A twice, 4.5 and 6 s later (the Load successful
+ * box takes the second: one alone, at 3, 4.5 or 6 s, never was), and no
+ * further, so the main menu is the player's. RECOMP_AUTO_A_DELAY moves the
+ * first A (half seconds, default 9). */
+static volatile int s_ap_state;   /* 0 off, 1 waiting for the title, 2 pressing, 3 done */
+static volatile int s_ap_profile;
+static volatile int s_ap_menu;    /* a sound bank opened after the profile: past Continue */
+
+static void ap_file_open(const char *path, uint32_t status)
+{
+    if (status)
+        return;
+    if (s_ap_state == 1 && strstr(path, "_FEMain.xmv"))
+        s_ap_state = 2;
+    else if (s_ap_state == 2 && strstr(path, "\\Profile"))
+        s_ap_profile = 1;
+    else if (s_ap_profile && strstr(path, ".xwb"))
+        s_ap_menu = 1;
+}
+
+#if defined(_WIN32)
+static DWORD WINAPI ap_thread(LPVOID unused)
+#else
+static void *ap_thread(void *unused)
+#endif
+{
+    extern void xbox_InputPulse(uint16_t buttons, uint8_t analog_mask, unsigned ms);
+    int after = 0, n = 0;
+    (void)unused;
+    while (s_ap_state != 3 && n < 600) {
+#if defined(_WIN32)
+        Sleep(500);
+#else
+        usleep(500000);
+#endif
+        n++;
+        if (s_ap_state != 2)
+            continue;
+        if (s_ap_profile) {
+            /* the profile is read: A on Continue every 1.5 s until the menu's
+             * first sound bank opens (Continue taken), 8 tries at most */
+            static int delay = -1, t0;
+            if (delay < 0) {
+                const char *d = getenv("RECOMP_AUTO_A_DELAY");   /* half seconds */
+                delay = d ? atoi(d) : 9;
+                t0 = n;
+            }
+            /* Two presses, 1.5 s apart: the box takes the second (a single
+             * one at 3, 4.5 or 6 s was never accepted). */
+            if (n - t0 == delay || n - t0 == delay + 3) {
+                xbox_InputPulse(0, 0x01 /* A */, 150);
+                fprintf(stderr, "[AUTO] A after %.1f s\n", (n - t0) / 2.0);
+                if (n - t0 == delay + 3)
+                    s_ap_state = 3;
+            }
+            (void)after;
+            continue;
+        }
+        if (n % 3 == 0) {
+            xbox_InputPulse(0x0010 /* START */, 0, 150);
+            fprintf(stderr, "[AUTO] START\n");
+        }
+    }
+    fprintf(stderr, "[AUTO] profile %s\n", !s_ap_profile ? "not found: menus left alone"
+                    : "loaded, Continue pressed: at the main menu");
+    return 0;
+}
+
+static void auto_profile_start(void)
+{
+    extern void (*xbox_FileOpenHook)(const char *guest_path, uint32_t status);
+    const char *e = getenv("RECOMP_AUTO_PROFILE");
+    if (e && e[0] == '0')
+        return;
+    s_ap_state = 1;
+    xbox_FileOpenHook = ap_file_open;
+#if defined(_WIN32)
+    CloseHandle(CreateThread(NULL, 0, ap_thread, NULL, 0, NULL));
+#else
+    {
+        pthread_t t;
+        if (pthread_create(&t, NULL, ap_thread, NULL) == 0)
+            pthread_detach(t);
+    }
+#endif
+}
+
 int main(int argc, char **argv)
 {
 #if BO3_MOBILE
@@ -1221,6 +1314,12 @@ int main(int argc, char **argv)
     int headless = 0, i;
 
     stdio_log_setup();
+    /* The event intros (the mode explained, the same every time) play the
+     * two-second Criterion logo instead: Burnout 3 waits on a missing movie
+     * forever, but a short one plays and the event starts. */
+    if (!getenv("RECOMP_SKIP_FILES"))
+        env_set("RECOMP_SKIP_FILES", "TrD_ENG.xmv=cri_rw30.xmv,TrC_ENG.xmv=cri_rw30.xmv");
+    auto_profile_start();
 
     for (i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "--headless"))
