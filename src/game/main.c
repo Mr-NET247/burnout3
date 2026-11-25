@@ -1136,7 +1136,9 @@ static void mobile_defaults(void)
     /* A headset: immersive mode, before the backend makes its device. */
     {
         extern int xbox_XrInit(void);
-        xbox_XrInit();
+        /* A big screen shows 640x480 for what it is: twice that inside. */
+        if (xbox_XrInit())
+            setenv("RECOMP_RENDER_SCALE", "2", 0);
     }
 #endif
     /* Landscape only: SDL otherwise lets a resizable window take any
