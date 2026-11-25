@@ -1132,6 +1132,13 @@ static void mobile_defaults(void)
         }
     }
     setenv("RECOMP_PB_BACKEND", "vulkan", 0);
+#if defined(XBR_HAVE_OPENXR)
+    /* A headset: immersive mode, before the backend makes its device. */
+    {
+        extern int xbox_XrInit(void);
+        xbox_XrInit();
+    }
+#endif
     /* Landscape only: SDL otherwise lets a resizable window take any
      * orientation, over the manifest's. */
     SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
