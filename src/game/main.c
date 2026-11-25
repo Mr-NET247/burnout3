@@ -1201,6 +1201,8 @@ static void mobile_defaults(void)
     setenv("RECOMP_STDIO_LOG", log, 0);
 #if !defined(__ANDROID__)
     setenv("RECOMP_PB_BACKEND", "metal", 0);
+    /* an iPad's screen shows 640x480 for what it is: twice that inside */
+    setenv("RECOMP_RENDER_SCALE", "2", 0);
 #endif
     setenv("RECOMP_FB_WINDOW", "1", 0);
     /* xbox_kernel.log opens in the working directory. */
@@ -1317,6 +1319,12 @@ int main(int argc, char **argv)
     /* The event intros (the mode explained, the same every time) play the
      * two-second Criterion logo instead: Burnout 3 waits on a missing movie
      * forever, but a short one plays and the event starts. */
+    /* Burnout 3 steps its world once a frame and leaves the 60 Hz to the
+     * flip, which on the console completes at a vblank. Without the hold
+     * the GPU backends flipped at 150 a second on an iPad Air and a Mac:
+     * the menus and the races ran 2.5 times too fast. */
+    if (!getenv("RECOMP_FLIP_PACING"))
+        env_set("RECOMP_FLIP_PACING", "1");
     if (!getenv("RECOMP_SKIP_FILES"))
         env_set("RECOMP_SKIP_FILES", "TrD_ENG.xmv=cri_rw30.xmv,TrC_ENG.xmv=cri_rw30.xmv");
     auto_profile_start();
