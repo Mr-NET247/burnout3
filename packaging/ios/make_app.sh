@@ -22,7 +22,14 @@ cp -R "$BUILD/burnout3.app" "$APP"
 sed -e "s/@BUNDLE_ID@/$ID/" -e "s/@SHORT_VERSION@/1.0/" -e "s/@VERSION@/$VER/" \
     -e "s/@PLATFORM@/$PL/" "$HERE/Info.plist.in" > "$APP/Info.plist"
 cp "$ROOT/packaging/config.default.toml" "$APP/config.default.toml"
-rsync -aL --delete "$GAME/" "$APP/game_files/"
+# Not the dump's UDATA and TDATA: the bundle is read-only on a device, and
+# the kernel keeps saves in a game folder that has them (kernel_path.c), so
+# the first save failed (access denied) and the title exited. Saves go to
+# Documents/hdd instead.
+rsync -aL --delete --exclude /UDATA --exclude /TDATA "$GAME/" "$APP/game_files/"
 if [ -n "${PROFILE:-}" ]; then cp "$PROFILE" "$APP/embedded.mobileprovision"; fi
-codesign --force --sign "${CODESIGN_IDENTITY:--}" --timestamp=none "$APP"
+# A device build: ENTITLEMENTS names the plist its profile allows (the
+# application-identifier, the team, get-task-allow for a development one).
+codesign --force --sign "${CODESIGN_IDENTITY:--}" --timestamp=none \
+    ${ENTITLEMENTS:+--entitlements "$ENTITLEMENTS"} "$APP"
 echo "$APP"

@@ -1452,9 +1452,13 @@ int main(int argc, char **argv)
          * plain tick, which ran the game at about 42 vblanks a second on an
          * M4 Pro; "paced" (understood by upstream v0.18 too) holds 60. */
         const char *b = getenv("RECOMP_PB_BACKEND");
-        env_set("RECOMP_VBLANK", !b || !strcmp(b, "metal") ? "paced" : "1");
+        env_set("RECOMP_VBLANK", !b || !strcmp(b, "metal") || !strcmp(b, "vulkan")
+                                 ? "paced" : "1");
 #else
-        env_set("RECOMP_VBLANK", "1");
+        /* Vulkan (Android, Quest) as Metal: the plain tick ran a Pixel 7 Pro
+         * at 30-35 vblanks a second; paced holds 60. */
+        const char *b = getenv("RECOMP_PB_BACKEND");
+        env_set("RECOMP_VBLANK", b && !strcmp(b, "vulkan") ? "paced" : "1");
 #endif
     }
 #endif
