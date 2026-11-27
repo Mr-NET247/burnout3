@@ -6,11 +6,13 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-20
+
 The project now runs on the shared xboxrecomp runtime instead of its own fork,
 and the title boots and plays through its own code. Needs xboxrecomp
-#138-#156 (on its `main`): the vertex-program interpreter, register combiners,
-x87 precision control, SSE compare predicates, multi-pad USB, the DPC queue lock
-and per-flip frame dumps.
+#138-#156, pinned at `afeb69f` (2026-09-30): the vertex-program interpreter,
+register combiners, x87 precision control, SSE compare predicates, multi-pad
+USB, the DPC queue lock and per-flip frame dumps.
 
 ### Added
 - Every game mode plays: Race, Time Attack, Road Rage and Crash for one player;
@@ -24,6 +26,12 @@ and per-flip frame dumps.
 - `Setup.cmd` / `tools/setup.ps1`: one-click setup from a clean machine. It
   checks and offers to install the tools, fetches the toolkit, unpacks your disc
   image, regenerates, builds and leaves a launcher.
+- A Windows installer (`Burnout3-Installer-windows-x64.exe` on the release),
+  built by recomp-launcher from `launcher/launcher.json`: choose the folder with
+  your `.iso`, **Build my recomp**, **Play**.
+- `Setup.cmd -Yes -GameDir <iso or folder>`: installs what's missing and asks
+  nothing (the recomp-launcher setup contract). `-GameDir` takes the image, a
+  folder holding it, or an unpacked disc; `-Iso` still works.
 - `regen.sh`: the toolkit pipeline in order. `config/seed_functions.json`:
   function entries only a run can find.
 - Hang watchdog and a NaN trap (`BO3_TRAP_NAN`) in `main.c` for debugging.
@@ -60,6 +68,7 @@ and per-flip frame dumps.
   builds the console program. Setup skips a build that already exists, so
   rebuild an existing checkout with `cmake --build build-xr --config Release`
   and run Setup again for the new launcher.
+- Windows Setup and the upstream installer pin xboxrecomp at `afeb69f`.
 - The build links the xboxrecomp runtime libraries (`../xboxrecomp`) instead of
   in-tree copies.
 - Format and engine research notes moved to `docs/research/`.
@@ -91,3 +100,6 @@ and per-flip frame dumps.
   rebuild.
 - The README described a build that did not run (#1, reported by
   [@VincxBlox](https://github.com/VincxBlox)).
+
+[Unreleased]: https://github.com/sp00nznet/burnout3/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/sp00nznet/burnout3/releases/tag/v0.1.0
